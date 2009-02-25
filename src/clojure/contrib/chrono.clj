@@ -50,9 +50,17 @@
       Calendar/FRIDAY :friday
       Calendar/SATURDAY :saturday})
 
+(def #^{:doc "Conversion of unit keywords to Calendar units"}
+     units-to-calendar-units
+     {:year Calendar/YEAR,
+      :month Calendar/MONTH,
+      :day Calendar/DATE,
+      :hour Calendar/HOUR,
+      :minute Calendar/MINUTE,
+      :second Calendar/SECOND})
+
 (defn- make-calendar
-  "Given some date values, create a Java Calendar object with only
-that data."
+  "Given some date values, create a Java Calendar object with only that data."
   ([] (doto (Calendar/getInstance)
         (.clear)
         (.setLenient true)))
@@ -66,93 +74,63 @@ that data."
      (doto (make-calendar)
        (.set year (dec month) day hours minutes seconds))))
 
-(defn- time-zone-object
-  "Gets a Java TimeZone object from a string ID.
-If no ID is given, use the default time zone for the current locale."
-  ([] (TimeZone/getDefault))
-  ([id] (TimeZone/getTimeZone id)))
-
-(defn- time-zone-id
-  "Gets the string ID of a Java TimeZone object"
-  [tz-obj]
-  (.getID tz-obj))
-
-(defn- date-dispatcher
-  "Gets a type keyword for a Date object. Uses ::Calendar for Java
-Calendar objects, and the symbol in the :type slot for Clojure dates."
-  [x]
-  (if (instance? Calendar x)
-    ::Calendar
-    (:type x)))
-
-(derive ::Date ::Instant)
-(derive ::DateTime ::Instant)
-
-(defmulti to-date date-dispatcher)
-
-(defmethod to-date ::Calendar [cal]
-  (let [d {:year (.get cal Calendar/YEAR)
-           :month (inc (.get cal Calendar/MONTH))
-           :day (.get cal Calendar/DAY_OF_MONTH)
-           :zone (time-zone-id (.getTimeZone cal))}
-        h (.get cal Calendar/HOUR_OF_DAY)
-        m (.get cal Calendar/MINUTE)
-        s (.get cal Calendar/SECOND)]
-    (if (= 0 h m s)
-      (assoc d :type ::Date)
-      (assoc d
-        :type ::DateTime
-        :hour h
-        :minute m
-        :second s))))
-
-(defmulti to-calendar date-dispatcher)
-
-(defmethod to-calendar ::Date [date]
-  (doto (Calendar/getInstance)
-    (.clear)
-    (.set (:year date)
-          (dec (:month date))
-          (:day date))
-    (.setTimeZone (time-zone-object (:zone date)))))
-
-(defmethod to-calendar ::DateTime [date]
-  (doto (Calendar/getInstance)
-    (.clear)
-    (.set (:year date)
-          (dec (:month date))
-          (:day date)
-          (:hour date)
-          (:minute date)
-          (:second date))
-    (.setTimeZone (time-zone-object (:zone date)))))
+(defn- get-unit [calendar unit]
+  (.get calendar (units-to-calendar-units unit)))
 
 (defn date
   "Creates a Date or Time object with exactly the given information."
   [& args]
-  (to-date (apply make-calendar args)))
+  (let [jcalendar (apply make-calendar args)]
+    (proxy [clojure.lang.IFn] []
+      (toString [] (str "#<ChronoDate"
+                        ;; TODO: formatted stuff here
+                        ">"))
+      ;; look up :year, :month, :date, :weekday, etc.
+      (invoke [unit]
+              (cond (= :jcalendar unit) jcalendar
+                    (= :month unit) (inc (get-unit jcalendar :month))
+                    true (get-unit jcalendar unit))))))
 
-(defn now
-  "Creates a Time object with the current date and time."
-  []
-  (to-date (Calendar/getInstance)))
+;; TODO: how would this work with proxy?
+;; (defn date?
+;;   "Is obj a date?"
+;;   [obj] (#{::Date ::DateTime} (:type obj)))
 
-(defn today
-  "Creates a Date object with the current date."
-  []
-  (assoc (dissoc (now) :hour :minute :second)
-    :type ::Date))
+;;; Relative functions
 
-(defn day-of-week
-  "Returns a keyword representing the day of the week (:sunday
-:monday, :tuesday, etc.) of the given date"
-  [date]
-  (weekday-map (.get (to-calendar date) Calendar/DAY_OF_WEEK)))
+(defn later
+  "Returns a date that is later than the-date by amount units."
+  ([the-date amount units]
+     ;; TODO: can't clone these proxy objects. ugh. We may need
+     ;; to gen-interface so we can implement more than just what IFn
+     ;; provides. =(
+      (doto (.clone the-date)
+        (.set (units-to-calendar-units units)
+              (+ (.get (units-to-calendar-units units) the-date)
+                 amount))))
+  ([the-date units]
+     (later the-date 1 units)))
+
+(defn earlier
+  "Returns a date that is earlier than the-date by amount units."
+  ([the-date amount units]
+     (later the-date (- amount) units))
+  ([the-date units]
+     (later the-date -1 units)))
+
+(defn later? [date-a date-b]
+  "Is date-a later than date-b?"
+  (.after (:jcalendar date-a) (:jcalendar date-b)))
+
+(defn earlier? [date-a date-b]
+  "Is date-a earlier than date-b?"
+  (.before (:jcalendar date-a) (:jcalendar date-b)))
 
 (defmulti
   #^{:doc "Take in a date and a format (either a keyword or
 a string) and return a string with the formatted date."}
   format-date (fn [date form] [(date-dispatcher date) form]))
+
 (defmulti
   #^{:doc "Take in a string with a formatted date and a format
  (either a keyword or a string) and return a parsed date."}
