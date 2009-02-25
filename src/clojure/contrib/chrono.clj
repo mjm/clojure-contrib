@@ -77,11 +77,15 @@
 (defn- get-unit [calendar unit]
   (.get calendar (units-to-calendar-units unit)))
 
+(gen-interface
+ :name clojure.contrib.chrono.Instant
+ :extends [clojure.lang.IFn])
+
 (defn date
   "Creates a Date or Time object with exactly the given information."
   [& args]
   (let [jcalendar (apply make-calendar args)]
-    (proxy [clojure.lang.IFn] []
+    (proxy [clojure.contrib.chrono.Instant] []
       (toString [] (str "#<ChronoDate"
                         ;; TODO: formatted stuff here
                         ">"))
@@ -125,6 +129,10 @@
 (defn earlier? [date-a date-b]
   "Is date-a earlier than date-b?"
   (.before (:jcalendar date-a) (:jcalendar date-b)))
+
+(defn date-dispatcher [date] nil)
+(defn to-calendar [date] nil)
+(defn to-date [cal] nil)
 
 (defmulti
   #^{:doc "Take in a date and a format (either a keyword or
