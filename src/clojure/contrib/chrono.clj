@@ -1,38 +1,37 @@
-;;; A date library that follows principle of least surprise
-;;;
-;;; A few usage examples:
-;;;
-;;;   user> (now)
-;;;   {:second 24, :minute 10, :hour 0, :type
-;;;   :clojure.contrib.date/DateTime, :year 2009, :month 1, :day 23
-;;;   :zone "America/New_York"}
-;;;
-;;;   user> (today)
-;;;   {:type :clojure.contrib.date/Date, :year 2009, :month 1, :day
-;;;   23, :zone "America/New_York"}
-;;;
-;;;   user> (date 2008 12 25)
-;;;   {:type :clojure.contrib.date/Date, :year 2008, :month 12, :day
-;;;   25, :zone "America/New_York"}
-;;;
-;;;   user> (date 2008 12 25 4 25 36)
-;;;   {:second 36, :minute 25, :hour 4, :type
-;;;   :clojure.contrib.date/DateTime, :year 2008, :month 12, :day 25
-;;;   :zone "America/New_York"}
-;;;
-;;;   user> (format-date (now) :short)
-;;;   "1/23/09 12:18 AM"
-;;;
-;;;   user> (format-date (today) :short)
-;;;   "1/23/09"
-;;;
-;;;   user> (format-date (date 2008 12 25) :long)
-;;;   "December 25, 2008"
-;;;
-;;;   user> (parse-date "Jan 1, 2009" :medium-date)
-;;;   {:type :clojure.contrib.date/Date, :year 2009, :month 1, :day 1
-;;;   :zone "America/New_York"}
-;;;
+;;; chrono.clj --- A date library that follows principle of least surprise.
+
+;; By Matt Moriarity and Phil Hagelberg
+
+;;; Use the date function to create dates. You can look up components
+;;; much like you would in a map:
+;;
+;; (def my-date (date 2009 2 27 12 34 56))
+;;
+;; (my-date :year)   ;; 2009
+;; (my-date :month)  ;; 2
+;; (my-date :day)    ;; 27
+;; (my-date :hour)   ;; 12
+;; (my-date :minute) ;; 34
+;; (my-date :second) ;; 56
+;;
+;;; You may omit the time if you like:
+;;
+;; (def my-other-date (date 2009 2 27))
+;; (my-other-date :hour) ;; 0
+;;
+;;; To get a date relative to another date, use earlier and later:
+;;
+;; (earlier my-date 100 :minute) ;; 2009 2 27 10:54:56
+;; (later my-other-date 10 :day) ;; 2009 3 9
+;;
+;;; For comparing dates, use earlier? and later?:
+;;
+;; (earlier? my-date my-other-date) ;; false
+;; (later? (later my-date 10 :day)  ;; true
+;;
+;; See test_contrib/chrono.clj for more details.
+;;
+
 (ns clojure.contrib.chrono
   (:import (java.util Calendar TimeZone)
            (java.text DateFormat SimpleDateFormat)))
@@ -95,7 +94,7 @@
       (equals [other-date]
               (.equals calendar (other-date :calendar)))
       (invoke [unit]
-              (cond (= :calendar unit) calendar
+              (cond (= :calendar unit) calendar ;; mostly for internal use
                     (= :month unit) (inc (get-unit calendar :month))
                     true (get-unit calendar unit))))))
 
