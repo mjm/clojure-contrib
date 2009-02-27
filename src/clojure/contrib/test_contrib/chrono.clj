@@ -7,21 +7,16 @@
 (def day-one (date 2008 11 21, 11 21 48))
 
 (deftest test-date-creation
-  ;; TODO: Not sure about the interface here. We may not be able to
-  ;; pull off map-like keyword lookup for dates depending on internal
-  ;; representation. May need get-year etc. style instead?
-  (is (= 2008 (:year day-one)))
-  (is (= 11 (:month day-one)))
-  (is (= 21 (:day day-one)))
-  (is (= 11 (:hour day-one)))
-  (is (= 21 (:minute day-one)))
-  (is (= 48 (:second day-one)))
+  (is (= 2008 (day-one :year)))
+  (is (= 11 (day-one :month)))
+  (is (= 21 (day-one :day)))
+  (is (= 11 (day-one :hour)))
+  (is (= 21 (day-one :minute)))
+  (is (= 48 (day-one :second)))
   ;; overflows simply roll over to the next month/year/etc.
-  (is (= 1 (:day (date 2008 1 32)))))
-
-;; (deftest test-date?
-;;   (is (date? day-one))
-;;   (is (not (date? 14))))
+  (is (= 1 ((date 2008 1 32) :day)))
+  ;; TODO: why doesn't this work? (isa? (day-one :calendar) java.util.Calendar)
+  (is (= java.util.GregorianCalendar (class (day-one :calendar)))))
 
 ;; (deftest test-parse-date
 ;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
@@ -31,9 +26,9 @@
 ;;   (is (= "2008 Nov 21 11:21:48" (format-date day-one)))
 ;;   (is (= "2008-11-21 11:12Z" (format-date day-one :iso))))
 
-;; ;; TODO: test string representations outside format. .toString?
-
-;; This is currently broken. Like nearly everything.
+;; (deftest test-to-string
+;;   ;; TODO
+;;   )
 
 (deftest test-later
   (is (= (date 2009 11 21 11 21 48)
@@ -100,4 +95,3 @@
 
 ;; TODO: time zone stuff?
 
-(run-tests)
