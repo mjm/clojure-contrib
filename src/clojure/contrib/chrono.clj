@@ -80,21 +80,16 @@
 (defn date
   "Creates a Date or Time object with exactly the given information."
   [& args]
-  (let [jcalendar (apply make-calendar args)]
+  (let [calendar (apply make-calendar args)]
     (proxy [clojure.lang.IFn] []
       (toString [] (str "#<ChronoDate"
                         ;; TODO: formatted stuff here
                         ">"))
       ;; look up :year, :month, :date, :weekday, etc.
       (invoke [unit]
-              (cond (= :jcalendar unit) jcalendar
-                    (= :month unit) (inc (get-unit jcalendar :month))
-                    true (get-unit jcalendar unit))))))
-
-;; TODO: how would this work with proxy?
-;; (defn date?
-;;   "Is obj a date?"
-;;   [obj] (#{::Date ::DateTime} (:type obj)))
+              (cond (= :calendar unit) calendar
+                    (= :month unit) (inc (get-unit calendar :month))
+                    true (get-unit calendar unit))))))
 
 ;;; Relative functions
 
@@ -120,11 +115,13 @@
 
 (defn later? [date-a date-b]
   "Is date-a later than date-b?"
-  (.after (:jcalendar date-a) (:jcalendar date-b)))
+  (.after (:calendar date-a) (:calendar date-b)))
 
 (defn earlier? [date-a date-b]
   "Is date-a earlier than date-b?"
-  (.before (:jcalendar date-a) (:jcalendar date-b)))
+  (.before (:calendar date-a) (:calendar date-b)))
+
+(declare date-dispatcher)
 
 (defmulti
   #^{:doc "Take in a date and a format (either a keyword or
@@ -191,61 +188,61 @@ Syntax:
              [~(ffirst p) ~'_]
              ~@(rest p))))))
 
-(defmacro def-java-date-format
-  "Defines a date format that delegates to a Java DateFormat.
-The body is simply an expression that will return a DateFormat."
-  [fname ftype formatter]
-  `(def-date-format ~fname ~ftype
-     (:append-type true)
-     (:formatter [date#]
-                 (.format ~formatter
-                          (.getTime (to-calendar date#))))
-     (:parser [source#]
-              (to-date
-               (doto (make-calendar)
-                 (.setTime (.parse
-                            ~formatter
-                            source#)))))))
+;; (defmacro def-java-date-format
+;;   "Defines a date format that delegates to a Java DateFormat.
+;; The body is simply an expression that will return a DateFormat."
+;;   [fname ftype formatter]
+;;   `(def-date-format ~fname ~ftype
+;;      (:append-type true)
+;;      (:formatter [date#]
+;;                  (.format ~formatter
+;;                           (.getTime (to-calendar date#))))
+;;      (:parser [source#]
+;;               (to-date
+;;                (doto (make-calendar)
+;;                  (.setTime (.parse
+;;                             ~formatter
+;;                             source#)))))))
 
-(def-java-date-format short date
-  (DateFormat/getDateInstance DateFormat/SHORT))
+;; (def-java-date-format short date
+;;   (DateFormat/getDateInstance DateFormat/SHORT))
 
-(def-java-date-format medium date
-  (DateFormat/getDateInstance DateFormat/MEDIUM))
+;; (def-java-date-format medium date
+;;   (DateFormat/getDateInstance DateFormat/MEDIUM))
 
-(def-java-date-format long date
-  (DateFormat/getDateInstance DateFormat/LONG))
+;; (def-java-date-format long date
+;;   (DateFormat/getDateInstance DateFormat/LONG))
 
-(def-java-date-format full date
-  (DateFormat/getDateInstance DateFormat/FULL))
+;; (def-java-date-format full date
+;;   (DateFormat/getDateInstance DateFormat/FULL))
 
-(def-java-date-format short date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/SHORT
-   DateFormat/SHORT))
+;; (def-java-date-format short date-time
+;;   (DateFormat/getDateTimeInstance
+;;    DateFormat/SHORT
+;;    DateFormat/SHORT))
 
-(def-java-date-format medium date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/MEDIUM
-   DateFormat/MEDIUM))
+;; (def-java-date-format medium date-time
+;;   (DateFormat/getDateTimeInstance
+;;    DateFormat/MEDIUM
+;;    DateFormat/MEDIUM))
 
-(def-java-date-format long date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/LONG
-   DateFormat/LONG))
+;; (def-java-date-format long date-time
+;;   (DateFormat/getDateTimeInstance
+;;    DateFormat/LONG
+;;    DateFormat/LONG))
 
-(def-java-date-format full date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/FULL
-   DateFormat/FULL))
+;; (def-java-date-format full date-time
+;;   (DateFormat/getDateTimeInstance
+;;    DateFormat/FULL
+;;    DateFormat/FULL))
 
-;;; Formats dates with a custom string format
-(defmethod format-date :default [date form]
-  (.format (SimpleDateFormat. form)
-           (.getTime (to-calendar date))))
+;; ;;; Formats dates with a custom string format
+;; (defmethod format-date :default [date form]
+;;   (.format (SimpleDateFormat. form)
+;;            (.getTime (to-calendar date))))
 
-;;; Parse a date from a string format
-(defmethod parse-date :default [source form]
-  (to-date
-   (doto (make-calendar)
-     (.setTime (.parse (SimpleDateFormat. form) source)))))
+;; ;;; Parse a date from a string format
+;; (defmethod parse-date :default [source form]
+;;   (to-date
+;;    (doto (make-calendar)
+;;      (.setTime (.parse (SimpleDateFormat. form) source)))))
