@@ -64,6 +64,8 @@
   ([] (doto (Calendar/getInstance)
         (.clear)
         (.setLenient true)))
+  ([calendar]
+     calendar)
   ([year month day]
      (doto (make-calendar)
        (.set year (dec month) day)))
@@ -86,6 +88,8 @@
                         ;; TODO: formatted stuff here
                         ">"))
       ;; look up :year, :month, :date, :weekday, etc.
+      (equals [other-date]
+              (.equals calendar (other-date :calendar)))
       (invoke [unit]
               (cond (= :calendar unit) calendar
                     (= :month unit) (inc (get-unit calendar :month))
@@ -96,13 +100,11 @@
 (defn later
   "Returns a date that is later than the-date by amount units."
   ([the-date amount units]
-     ;; TODO: can't clone these proxy objects. ugh. We may need
-     ;; to gen-interface so we can implement more than just what IFn
-     ;; provides. =(
-      (doto (.clone the-date)
-        (.set (units-to-calendar-units units)
-              (+ (.get (units-to-calendar-units units) the-date)
-                 amount))))
+     (date (doto (.clone (the-date :calendar))
+             (.set (units-to-calendar-units units)
+                   (+ (.get (the-date :calendar)
+                            (units-to-calendar-units units))
+                      amount)))))
   ([the-date units]
      (later the-date 1 units)))
 

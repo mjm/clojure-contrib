@@ -29,25 +29,25 @@
 ;;   (is (= "2008 Nov 21 11:21:48" (format-date day-one)))
 ;;   (is (= "2008-11-21 11:12Z" (format-date day-one :iso))))
 
-;; ;; TODO: test string representations outside format. .toString?
+;; (deftest test-to-string
+;;   ;; TODO
+;;   )
 
-;; This is currently broken. Like nearly everything.
-
-;; (deftest test-later
-;;   (is (= (date 2009 11 21 11 21 48)
-;;          (later day-one 1 :year)))
-;;   (is (= (date 2008 10 21 11 21 48)
-;;          (later day-one -1 :month)))
-;;   (is (= (date 2008 11 24 11 21 48)
-;;          (later day-one 3 :day)))
-;;   (is (= (date 2008 11 21 12 21 48)
-;;          (later day-one 1 :hour)))
-;;   (is (= (date 2008 11 21 13 1 48)
-;;          (later day-one 100 :minute)))
-;;   (is (= (date 2008 11 21 11 21 49)
-;;          (later day-one 1 :second)))
-;;   (is (= (later christmas :day)
-;;          (later christmas 1 :day))))
+(deftest test-later
+  (is (= (date 2009 11 21 11 21 48)
+         (later day-one 1 :year)))
+  (is (= (date 2008 10 21 11 21 48)
+         (later day-one -1 :month)))
+  (is (= (date 2008 11 24 11 21 48)
+         (later day-one 3 :day)))
+  (is (= (date 2008 11 21 12 21 48)
+         (later day-one 1 :hour)))
+  (is (= (date 2008 11 21 13 1 48)
+         (later day-one 100 :minute)))
+  (is (= (date 2008 11 21 11 21 49)
+         (later day-one 1 :second)))
+  (is (= (later christmas :day)
+         (later christmas 1 :day))))
 
 ;; (deftest test-earlier
 ;;   (is (= (date 2008 8 13 11 21 48)
