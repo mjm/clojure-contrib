@@ -7,9 +7,6 @@
 (def day-one (date 2008 11 21, 11 21 48))
 
 (deftest test-date-creation
-  ;; TODO: Not sure about the interface here. We may not be able to
-  ;; pull off map-like keyword lookup for dates depending on internal
-  ;; representation. May need get-year etc. style instead?
   (is (= 2008 (day-one :year)))
   (is (= 11 (day-one :month)))
   (is (= 21 (day-one :day)))
@@ -49,24 +46,24 @@
   (is (= (later christmas :day)
          (later christmas 1 :day))))
 
-;; (deftest test-earlier
-;;   (is (= (date 2008 8 13 11 21 48)
-;;          (earlier day-one 100 :day)))
-;;   (is (= (date 2008 11 23 11 21 48)
-;;          (earlier day-one -2 :day)))
-;;   (is (= (date 2008 11 21 9 21 48)
-;;          (earlier day-one 2 :hour))))
+(deftest test-earlier
+  (is (= (date 2008 8 13 11 21 48)
+         (earlier day-one 100 :day)))
+  (is (= (date 2008 11 23 11 21 48)
+         (earlier day-one -2 :day)))
+  (is (= (date 2008 11 21 9 21 48)
+         (earlier day-one 2 :hour))))
 
 ;; Better would be to make > and < etc. work with dates; then >= would
 ;; be free. But this involves a change to core, I think?
 
-;; (deftest test-earlier?
-;;   (is (earlier? (date 2008 12 12)
-;;                 (date 2009 12 12))))
+(deftest test-earlier?
+  (is (earlier? (date 2008 12 12)
+                (date 2009 12 12))))
 
-;; (deftest test-later?
-;;   (is (later? (date 2008 12 99)
-;;               (date 2009 1 1))))
+(deftest test-later?
+  (is (later? (date 2008 12 99)
+              (date 2009 1 1))))
 
 ;; (deftest test-time-between
 ;;   ;; Leaning towards seconds being the default unit.

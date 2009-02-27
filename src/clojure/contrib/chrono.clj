@@ -117,11 +117,11 @@
 
 (defn later? [date-a date-b]
   "Is date-a later than date-b?"
-  (.after (:calendar date-a) (:calendar date-b)))
+  (.after (date-a :calendar) (date-b :calendar)))
 
 (defn earlier? [date-a date-b]
   "Is date-a earlier than date-b?"
-  (.before (:calendar date-a) (:calendar date-b)))
+  (.before (date-a :calendar) (date-b :calendar)))
 
 (declare date-dispatcher)
 
