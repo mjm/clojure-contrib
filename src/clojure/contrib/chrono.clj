@@ -78,15 +78,16 @@
 (defn- get-unit [calendar unit]
   (.get calendar (units-to-calendar-units unit)))
 
-(gen-interface
- :name clojure.contrib.chrono.Instant
- :extends [clojure.lang.IFn])
+;; (gen-interface
+;;  :name clojure.contrib.chrono.Instant
+;;  :extends [clojure.lang.IFn])
 
 (defn date
-  "Creates a Date or Time object with exactly the given information."
+  "Returns a new date object. Takes year, month, and day as args as
+  well as optionally hours, minutes, and seconds."
   [& args]
   (let [calendar (apply make-calendar args)]
-    (proxy [clojure.contrib.chrono.Instant] []
+    (proxy [clojure.lang.Instant] []
       (toString [] (str "#<ChronoDate"
                         ;; TODO: formatted stuff here
                         ">"))
