@@ -158,15 +158,6 @@
        (/ (time-between date-a date-b)
           (units-in-milliseconds units)))))
 
-;; Redefine subs to allow for negative indices
-(defn subs
-  "Returns the substring of s beginning at start inclusive, and ending
-  at end (defaults to length of string), exclusive."
-  ([#^String s start] (subs s start (count s)))
-  ([#^String s start end]
-     (let [count-back #(if (< 0 %) (+ (count s) %) %)]
-       (.substring s (count-back start) (count-back end)))))
-
 (declare date-dispatcher)
 
 (defn date-dispatcher [date] nil)
@@ -296,3 +287,14 @@ Syntax:
 ;;   (to-date
 ;;    (doto (make-calendar)
 ;;      (.setTime (.parse (SimpleDateFormat. form) source)))))
+
+;; Redefine subs to allow for negative indices. This should be
+;; submitted as a patch to Clojure.
+(in-ns 'clojure.core)
+(defn subs
+  "Returns the substring of s beginning at start inclusive, and ending
+  at end (defaults to length of string), exclusive."
+  ([#^String s start] (subs s start (count s)))
+  ([#^String s start end]
+     (let [count-back #(if (< 0 %) (+ (count s) %) %)]
+       (.substring s (count-back start) (count-back end)))))
