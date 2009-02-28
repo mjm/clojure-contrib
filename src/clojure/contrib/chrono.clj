@@ -102,7 +102,7 @@
   well as optionally hours, minutes, and seconds."
   [& args]
   (let [calendar (apply make-calendar args)]
-    (proxy [clojure.lang.Instant] []
+    (proxy [clojure.lang.IFn] []
       (toString [] (str "#<ChronoDate"
                         ;; TODO: formatted stuff here
                         ">"))
@@ -152,11 +152,20 @@
          (.getTimeInMillis (date-b :calendar)))))
   ([date-a date-b units]
      (let [units (if (re-find #"s$" (name units)) ;; Allow plurals
-                   ;; This relies on my patch to subs to allow negatives
+                   ;; This relies on the patched subs defn below
                    (keyword (subs (name units) 0 -1))
                    units)]
        (/ (time-between date-a date-b)
           (units-in-milliseconds units)))))
+
+;; Redefine subs to allow for negative indices
+(defn subs
+  "Returns the substring of s beginning at start inclusive, and ending
+  at end (defaults to length of string), exclusive."
+  ([#^String s start] (subs s start (count s)))
+  ([#^String s start end]
+     (let [count-back #(if (< 0 %) (+ (count s) %) %)]
+       (.substring s (count-back start) (count-back end)))))
 
 (declare date-dispatcher)
 
