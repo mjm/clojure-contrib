@@ -29,6 +29,10 @@
 ;; (earlier? my-date my-other-date) ;; false
 ;; (later? (later my-date 10 :day)  ;; true
 ;;
+;;; You can see the time between two dates by calling time-between:
+;;
+;; (time-between my-other-date (date 2009 2 25) :days) ;; 2
+;;
 ;; See test_contrib/chrono.clj for more details.
 ;;
 
@@ -57,6 +61,17 @@
       :hour Calendar/HOUR,
       :minute Calendar/MINUTE,
       :second Calendar/SECOND})
+
+(def #^{:doc "Number of milliseconds in each unit"}
+     units-in-milliseconds
+     {:year 31557600000,
+      :month 2592000000,
+      :week 67929088,
+      :day 86400000,
+      :hour 3600000,
+      :minute 60000,
+      :second 1000,
+      :millisecond 1})
 
 (defn- make-calendar
   "Given some date values, create a Java Calendar object with only that data."
@@ -126,6 +141,22 @@
 (defn earlier? [date-a date-b]
   "Is date-a earlier than date-b?"
   (.before (date-a :calendar) (date-b :calendar)))
+
+(defn time-between
+  "How many units between date-a and date-b? Units defaults to milliseconds."
+  ;; TODO: should we default to milliseconds just because that's what
+  ;; the underlying implementation uses? Is it a leaky abstraction?
+  ([date-a date-b]
+     (java.lang.Math/abs
+      (- (.getTimeInMillis (date-a :calendar))
+         (.getTimeInMillis (date-b :calendar)))))
+  ([date-a date-b units]
+     (let [units (if (re-find #"s$" (name units)) ;; Allow plurals
+                   ;; This relies on my patch to subs to allow negatives
+                   (keyword (subs (name units) 0 -1))
+                   units)]
+       (/ (time-between date-a date-b)
+          (units-in-milliseconds units)))))
 
 (declare date-dispatcher)
 

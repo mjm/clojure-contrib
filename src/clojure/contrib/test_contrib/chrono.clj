@@ -14,9 +14,7 @@
   (is (= 21 (day-one :minute)))
   (is (= 48 (day-one :second)))
   ;; overflows simply roll over to the next month/year/etc.
-  (is (= 1 ((date 2008 1 32) :day)))
-  ;; TODO: why doesn't this work? (isa? (day-one :calendar) java.util.Calendar)
-  (is (= java.util.GregorianCalendar (class (day-one :calendar)))))
+  (is (= 1 ((date 2008 1 32) :day))))
 
 ;; (deftest test-parse-date
 ;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
@@ -65,16 +63,14 @@
   (is (later? (date 2008 12 99)
               (date 2009 1 1))))
 
-;; (deftest test-time-between
-;;   ;; Leaning towards seconds being the default unit.
-;;   (is (= 5 (time-between (date 2009 1 1, 10 10 10)
-;;                          (date 2009 1 1, 10 10 15))))
-;;   (is (= 10 (time-between (date 2009 1 1, 10 10 10)
-;;                           (date 2009 1 1, 10 20 10)
-;;                           :minutes)))
-;;   ;; This means it rounds... if you ask for days, you get integral
-;;   ;; days. Not sure that this is agreeable.
-;;   (is (= 7 (time-between christmas new-years :days))))
+(deftest test-time-between
+  ;; Milliseconds is the default unit
+  (is (= 5000 (time-between (date 2009 1 1, 10 10 10)
+                         (date 2009 1 1, 10 10 15))))
+  (is (= 10 (time-between (date 2009 1 1, 10 10 10)
+                          (date 2009 1 1, 10 20 10)
+                          :minutes)))
+  (is (= 6 (int (time-between christmas new-years :day)))))
 
 ;; (deftest test-date-seq
 ;;   ;; TODO: should return a lazy seq of all dates between the two dates
