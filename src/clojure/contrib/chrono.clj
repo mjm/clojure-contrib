@@ -58,7 +58,7 @@
      {:year Calendar/YEAR,
       :month Calendar/MONTH,
       :day Calendar/DATE,
-      :hour Calendar/HOUR,
+      :hour Calendar/HOUR_OF_DAY,
       :minute Calendar/MINUTE,
       :second Calendar/SECOND})
 
