@@ -91,7 +91,7 @@
         (.clear)
         (.setLenient true)))
   ([calendar]
-     calendar)
+     (.clone calendar))
   ([year month day]
      (doto (make-calendar)
        (.set year (dec month) day)))
