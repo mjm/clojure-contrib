@@ -169,135 +169,76 @@
          (cons from (date-seq units (later from units) to)))))
   ([units from] (date-seq units from nil)))
 
-(declare date-dispatcher)
-
-(defn date-dispatcher [date] nil)
-(defn to-calendar [date] nil)
-(defn to-date [cal] nil)
-
 (defmulti
   #^{:doc "Take in a date and a format (either a keyword or
 a string) and return a string with the formatted date."}
-  format-date (fn [date form] [(date-dispatcher date) form]))
+  format-date (fn [date form] form))
 
 (defmulti
   #^{:doc "Take in a string with a formatted date and a format
  (either a keyword or a string) and return a parsed date."}
   parse-date (fn [source form] form))
 
-(defn- camelcase
-  "Takes a string that is lowercase and dash-separated and
-converts it to CamelCase."
-  [string]
-  (apply str
-         (map (fn [x]
-                (str (.toUpperCase (subs x 0 1))
-                     (subs x 1)))
-              (into [] (.split string "-")))))
+(defmacro def-date-format [fname [arg] & body]
+  `(defmethod format-date ~(keyword (name fname)) [~arg ~'_]
+     ~@body))
 
-(defn- sanitize-options
-  "Turn the options passed in to def-date-format into a map"
-  [options]
-  (apply hash-map
-         (apply concat
-                (map (fn [decl]
-                       (if (> (count decl) 2)
-                         (cons (first decl)
-                               (list (rest decl)))
-                         decl))
-                     options))))
+(defmacro def-date-parser [fname [arg] & body]
+  `(defmethod parse-date ~(keyword (name fname)) [~arg ~'_]
+     ~@body))
 
-(defmacro def-date-format
-  "Defines a new date format for use with format-date and parse-date.
-The formatter and parser can be arbitrary code. Both are optional
-although it's not all that useful if neither is specified. If
-the :append-type is true, the parser name is formed by joining the
-format name and the format type with a dash. Otherwise, the parser
-name is just the format name.
+(defmacro def-java-date-format [fname formatter]
+  `(do
+     (def-date-format ~fname [date#]
+       (.format ~formatter
+                (.getTime (date# :calendar))))
+     (def-date-parser ~fname [source#]
+       (date
+        (doto (make-calendar)
+          (.setTime (.parse ~formatter source#)))))))
 
-Syntax:
-  (def-date-format date-format-name date-type
-    (:append-type true) ;; if the format name is used for multiple types
-    (:formatter [date] code-to-format-to-string)
-    (:parser [string] code-to-parse-to-date))"
-  [fname ftype & options]
-  (let [resolved-type (keyword this-ns (camelcase (name ftype)))
-        option-map (sanitize-options options)
-        append? (:append-type option-map)
-        format-name (keyword (if append?
-                               (str (name fname) "-" (name ftype))
-                               (name fname)))]
-    [resolved-type option-map append? format-name]
-    `(do
-       ~(if-let [f (:formatter option-map)]
-          `(defmethod format-date
-             [~resolved-type ~(keyword (name fname))]
-             [~(ffirst f) ~'_]
-             ~@(rest f)))
-       ~(if-let [p (:parser option-map)]
-          `(defmethod parse-date
-             ~format-name
-             [~(ffirst p) ~'_]
-             ~@(rest p))))))
+(def-java-date-format short-date
+  (DateFormat/getDateInstance DateFormat/SHORT))
 
-;; (defmacro def-java-date-format
-;;   "Defines a date format that delegates to a Java DateFormat.
-;; The body is simply an expression that will return a DateFormat."
-;;   [fname ftype formatter]
-;;   `(def-date-format ~fname ~ftype
-;;      (:append-type true)
-;;      (:formatter [date#]
-;;                  (.format ~formatter
-;;                           (.getTime (to-calendar date#))))
-;;      (:parser [source#]
-;;               (to-date
-;;                (doto (make-calendar)
-;;                  (.setTime (.parse
-;;                             ~formatter
-;;                             source#)))))))
+(def-java-date-format medium-date
+  (DateFormat/getDateInstance DateFormat/MEDIUM))
 
-;; (def-java-date-format short date
-;;   (DateFormat/getDateInstance DateFormat/SHORT))
+(def-java-date-format long-date
+  (DateFormat/getDateInstance DateFormat/LONG))
 
-;; (def-java-date-format medium date
-;;   (DateFormat/getDateInstance DateFormat/MEDIUM))
+(def-java-date-format full-date
+  (DateFormat/getDateInstance DateFormat/FULL))
 
-;; (def-java-date-format long date
-;;   (DateFormat/getDateInstance DateFormat/LONG))
+(def-java-date-format short-date-time
+  (DateFormat/getDateTimeInstance
+   DateFormat/SHORT
+   DateFormat/SHORT))
 
-;; (def-java-date-format full date
-;;   (DateFormat/getDateInstance DateFormat/FULL))
+(def-java-date-format medium-date-time
+  (DateFormat/getDateTimeInstance
+   DateFormat/MEDIUM
+   DateFormat/MEDIUM))
 
-;; (def-java-date-format short date-time
-;;   (DateFormat/getDateTimeInstance
-;;    DateFormat/SHORT
-;;    DateFormat/SHORT))
+(def-java-date-format long-date-time
+  (DateFormat/getDateTimeInstance
+   DateFormat/LONG
+   DateFormat/LONG))
 
-;; (def-java-date-format medium date-time
-;;   (DateFormat/getDateTimeInstance
-;;    DateFormat/MEDIUM
-;;    DateFormat/MEDIUM))
+(def-java-date-format full-date-time
+  (DateFormat/getDateTimeInstance
+   DateFormat/FULL
+   DateFormat/FULL))
 
-;; (def-java-date-format long date-time
-;;   (DateFormat/getDateTimeInstance
-;;    DateFormat/LONG
-;;    DateFormat/LONG))
+;;; Formats dates with a custom string format
+(defmethod format-date :default [date form]
+  (.format (SimpleDateFormat. form)
+           (.getTime (date :calendar))))
 
-;; (def-java-date-format full date-time
-;;   (DateFormat/getDateTimeInstance
-;;    DateFormat/FULL
-;;    DateFormat/FULL))
-
-;; ;;; Formats dates with a custom string format
-;; (defmethod format-date :default [date form]
-;;   (.format (SimpleDateFormat. form)
-;;            (.getTime (to-calendar date))))
-
-;; ;;; Parse a date from a string format
-;; (defmethod parse-date :default [source form]
-;;   (to-date
-;;    (doto (make-calendar)
-;;      (.setTime (.parse (SimpleDateFormat. form) source)))))
+;;; Parse a date from a string format
+(defmethod parse-date :default [source form]
+  (date
+   (doto (make-calendar)
+     (.setTime (.parse (SimpleDateFormat. form) source)))))
 
 ;; Redefine subs to allow for negative indices. This should be
 ;; submitted as a patch to Clojure.
