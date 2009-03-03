@@ -1,4 +1,4 @@
-;;; chrono.clj --- A date library that follows principle of least surprise.
+;;; chrono.clj --- Because calling it date-utils would be boring.
 
 ;; By Matt Moriarity and Phil Hagelberg
 
@@ -14,6 +14,9 @@
 ;; (my-date :minute) ;; 34
 ;; (my-date :second) ;; 56
 ;;
+;; Currently (:day my-date) style is unsupported, but it doesn't look
+;; like it would be hard to add; see TODO under the defn of date.
+;;
 ;;; You may omit the time if you like:
 ;;
 ;; (def my-other-date (date 2009 2 27))
@@ -27,11 +30,20 @@
 ;;; For comparing dates, use earlier? and later?:
 ;;
 ;; (earlier? my-date my-other-date) ;; false
-;; (later? (later my-date 10 :day)  ;; true
+;; (later? (later my-date 10 :day) my-date) ;; true
 ;;
 ;;; You can see the time between two dates by calling time-between:
 ;;
 ;; (time-between my-other-date (date 2009 2 25) :days) ;; 2
+;;
+;; The date-seq function returns a lazy seq of dates incrementing by
+;; the units in its first arg starting from its second arg. The third
+;; arg if given dictates the end of the sequence.
+;;
+;; (date-seq :hours my-other-date my-date) ;; (a seq of twelve hours)
+;; (take 4 (date-seq :years my-date))
+;; ;; (date 2009 2 27 12 34 56) (date 2010 2 27 12 34 56)
+;; ;; (date 2011 2 27 12 34 56) (date 2012 2 27 12 34 56) [...]
 ;;
 ;; See test_contrib/chrono.clj for more details.
 ;;
@@ -102,6 +114,8 @@
   well as optionally hours, minutes, and seconds."
   [& args]
   (let [calendar (apply make-calendar args)]
+    ;; TODO: if we implement Associative, then we can use
+    ;; (:day my-date) as well as (my-date :day)
     (proxy [clojure.lang.IFn] []
       (toString [] (str "#<ChronoDate "
                         ;; TODO: use prettier formatting; ugh.
@@ -153,6 +167,8 @@
       (- (.getTimeInMillis (date-a :calendar))
          (.getTimeInMillis (date-b :calendar)))))
   ([date-a date-b units]
+     ;; TODO: should we move plural support up to
+     ;; units-in-milliseconds and units-to-calendar-units?
      (let [units (if (re-find #"s$" (name units)) ;; Allow plurals
                    ;; This relies on the patched subs defn below
                    (keyword (subs (name units) 0 -1))
@@ -168,6 +184,8 @@
        (when (or (nil? to) (earlier? from to))
          (cons from (date-seq units (later from units) to)))))
   ([units from] (date-seq units from nil)))
+
+;;; Formatting and parsing
 
 (defmulti
   #^{:doc "Take in a date and a format (either a keyword or
@@ -229,6 +247,8 @@ a string) and return a string with the formatted date."}
    DateFormat/FULL
    DateFormat/FULL))
 
+;; TODO: we should support ISO 8601 formats.
+
 ;;; Formats dates with a custom string format
 (defmethod format-date :default [date form]
   (.format (SimpleDateFormat. form)
@@ -240,8 +260,8 @@ a string) and return a string with the formatted date."}
    (doto (make-calendar)
      (.setTime (.parse (SimpleDateFormat. form) source)))))
 
-;; Redefine subs to allow for negative indices. This should be
-;; submitted as a patch to Clojure.
+;; Redefine subs to allow for negative indices.
+;; TODO: This should be submitted as a patch to Clojure.
 (in-ns 'clojure.core)
 (defn subs
   "Returns the substring of s beginning at start inclusive, and ending
