@@ -240,6 +240,12 @@ a string) and return a string with the formatted date."}
    (doto (make-calendar)
      (.setTime (.parse (SimpleDateFormat. form) source)))))
 
+(def-date-format iso8601 [date]
+  (format-date date "yyyy-MM-dd HH:mm:ss"))
+
+(def-date-parser iso8601 [source]
+  (parse-date source "yyyy-MM-dd HH:mm:ss"))
+
 ;; Redefine subs to allow for negative indices. This should be
 ;; submitted as a patch to Clojure.
 (in-ns 'clojure.core)
