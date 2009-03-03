@@ -103,8 +103,10 @@
   [& args]
   (let [calendar (apply make-calendar args)]
     (proxy [clojure.lang.IFn] []
-      (toString [] (str "#<ChronoDate"
-                        ;; TODO: formatted stuff here
+      (toString [] (str "#<ChronoDate "
+                        ;; TODO: use prettier formatting; ugh.
+                        (this :year) "-" (this :month) "-" (this :day) " "
+                        (this :hour) ":" (this :minute) ":" (this :second)
                         ">"))
       ;; look up :year, :month, :date, :weekday, etc.
       (equals [other-date]
@@ -157,6 +159,15 @@
                    units)]
        (/ (time-between date-a date-b)
           (units-in-milliseconds units)))))
+
+(defn date-seq
+  "Returns a lazy seq of dates starting with from up until to in
+  increments of units. If to is omitted, returns an infinite seq."
+  ([units from to]
+     (lazy-seq
+       (when (or (nil? to) (earlier? from to))
+         (cons from (date-seq units (later from units) to)))))
+  ([units from] (date-seq units from nil)))
 
 (declare date-dispatcher)
 
@@ -296,5 +307,5 @@ Syntax:
   at end (defaults to length of string), exclusive."
   ([#^String s start] (subs s start (count s)))
   ([#^String s start end]
-     (let [count-back #(if (< 0 %) (+ (count s) %) %)]
+     (let [count-back #(if (< % 0) (+ (count s) %) %)]
        (.substring s (count-back start) (count-back end)))))
