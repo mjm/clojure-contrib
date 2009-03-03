@@ -1,38 +1,41 @@
-;;; A date library that follows principle of least surprise
-;;;
-;;; A few usage examples:
-;;;
-;;;   user> (now)
-;;;   {:second 24, :minute 10, :hour 0, :type
-;;;   :clojure.contrib.date/DateTime, :year 2009, :month 1, :day 23
-;;;   :zone "America/New_York"}
-;;;
-;;;   user> (today)
-;;;   {:type :clojure.contrib.date/Date, :year 2009, :month 1, :day
-;;;   23, :zone "America/New_York"}
-;;;
-;;;   user> (date 2008 12 25)
-;;;   {:type :clojure.contrib.date/Date, :year 2008, :month 12, :day
-;;;   25, :zone "America/New_York"}
-;;;
-;;;   user> (date 2008 12 25 4 25 36)
-;;;   {:second 36, :minute 25, :hour 4, :type
-;;;   :clojure.contrib.date/DateTime, :year 2008, :month 12, :day 25
-;;;   :zone "America/New_York"}
-;;;
-;;;   user> (format-date (now) :short)
-;;;   "1/23/09 12:18 AM"
-;;;
-;;;   user> (format-date (today) :short)
-;;;   "1/23/09"
-;;;
-;;;   user> (format-date (date 2008 12 25) :long)
-;;;   "December 25, 2008"
-;;;
-;;;   user> (parse-date "Jan 1, 2009" :medium-date)
-;;;   {:type :clojure.contrib.date/Date, :year 2009, :month 1, :day 1
-;;;   :zone "America/New_York"}
-;;;
+;;; chrono.clj --- A date library that follows principle of least surprise.
+
+;; By Matt Moriarity and Phil Hagelberg
+
+;;; Use the date function to create dates. You can look up components
+;;; much like you would in a map:
+;;
+;; (def my-date (date 2009 2 27 12 34 56))
+;;
+;; (my-date :year)   ;; 2009
+;; (my-date :month)  ;; 2
+;; (my-date :day)    ;; 27
+;; (my-date :hour)   ;; 12
+;; (my-date :minute) ;; 34
+;; (my-date :second) ;; 56
+;;
+;;; You may omit the time if you like:
+;;
+;; (def my-other-date (date 2009 2 27))
+;; (my-other-date :hour) ;; 0
+;;
+;;; To get a date relative to another date, use earlier and later:
+;;
+;; (earlier my-date 100 :minute) ;; 2009 2 27 10:54:56
+;; (later my-other-date 10 :day) ;; 2009 3 9
+;;
+;;; For comparing dates, use earlier? and later?:
+;;
+;; (earlier? my-date my-other-date) ;; false
+;; (later? (later my-date 10 :day)  ;; true
+;;
+;;; You can see the time between two dates by calling time-between:
+;;
+;; (time-between my-other-date (date 2009 2 25) :days) ;; 2
+;;
+;; See test_contrib/chrono.clj for more details.
+;;
+
 (ns clojure.contrib.chrono
   (:import (java.util Calendar TimeZone)
            (java.text DateFormat SimpleDateFormat)))
@@ -59,6 +62,17 @@
       :minute Calendar/MINUTE,
       :second Calendar/SECOND})
 
+(def #^{:doc "Number of milliseconds in each unit"}
+     units-in-milliseconds
+     {:year 31557600000,
+      :month 2592000000,
+      :week 67929088,
+      :day 86400000,
+      :hour 3600000,
+      :minute 60000,
+      :second 1000,
+      :millisecond 1})
+
 (defn- make-calendar
   "Given some date values, create a Java Calendar object with only that data."
   ([] (doto (Calendar/getInstance)
@@ -79,23 +93,26 @@
 (defn- get-unit [calendar unit]
   (.get calendar (units-to-calendar-units unit)))
 
-(gen-interface
- :name clojure.contrib.chrono.Instant
- :extends [clojure.lang.IFn])
+;; (gen-interface
+;;  :name clojure.contrib.chrono.Instant
+;;  :extends [clojure.lang.IFn])
 
 (defn date
-  "Creates a Date or Time object with exactly the given information."
+  "Returns a new date object. Takes year, month, and day as args as
+  well as optionally hours, minutes, and seconds."
   [& args]
   (let [calendar (apply make-calendar args)]
-    (proxy [clojure.contrib.chrono.Instant] []
-      (toString [] (str "#<ChronoDate"
-                        ;; TODO: formatted stuff here
+    (proxy [clojure.lang.IFn] []
+      (toString [] (str "#<ChronoDate "
+                        ;; TODO: use prettier formatting; ugh.
+                        (this :year) "-" (this :month) "-" (this :day) " "
+                        (this :hour) ":" (this :minute) ":" (this :second)
                         ">"))
       ;; look up :year, :month, :date, :weekday, etc.
       (equals [other-date]
               (.equals calendar (other-date :calendar)))
       (invoke [unit]
-              (cond (= :calendar unit) calendar
+              (cond (= :calendar unit) calendar ;; mostly for internal use
                     (= :month unit) (inc (get-unit calendar :month))
                     true (get-unit calendar unit))))))
 
@@ -126,6 +143,31 @@
 (defn earlier? [date-a date-b]
   "Is date-a earlier than date-b?"
   (.before (date-a :calendar) (date-b :calendar)))
+
+(defn time-between
+  "How many units between date-a and date-b? Units defaults to milliseconds."
+  ;; TODO: should we default to milliseconds just because that's what
+  ;; the underlying implementation uses? Is it a leaky abstraction?
+  ([date-a date-b]
+     (java.lang.Math/abs
+      (- (.getTimeInMillis (date-a :calendar))
+         (.getTimeInMillis (date-b :calendar)))))
+  ([date-a date-b units]
+     (let [units (if (re-find #"s$" (name units)) ;; Allow plurals
+                   ;; This relies on the patched subs defn below
+                   (keyword (subs (name units) 0 -1))
+                   units)]
+       (/ (time-between date-a date-b)
+          (units-in-milliseconds units)))))
+
+(defn date-seq
+  "Returns a lazy seq of dates starting with from up until to in
+  increments of units. If to is omitted, returns an infinite seq."
+  ([units from to]
+     (lazy-seq
+       (when (or (nil? to) (earlier? from to))
+         (cons from (date-seq units (later from units) to)))))
+  ([units from] (date-seq units from nil)))
 
 (declare date-dispatcher)
 
@@ -256,3 +298,14 @@ Syntax:
 ;;   (to-date
 ;;    (doto (make-calendar)
 ;;      (.setTime (.parse (SimpleDateFormat. form) source)))))
+
+;; Redefine subs to allow for negative indices. This should be
+;; submitted as a patch to Clojure.
+(in-ns 'clojure.core)
+(defn subs
+  "Returns the substring of s beginning at start inclusive, and ending
+  at end (defaults to length of string), exclusive."
+  ([#^String s start] (subs s start (count s)))
+  ([#^String s start end]
+     (let [count-back #(if (< % 0) (+ (count s) %) %)]
+       (.substring s (count-back start) (count-back end)))))

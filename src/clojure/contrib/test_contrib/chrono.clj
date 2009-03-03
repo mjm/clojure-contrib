@@ -14,9 +14,7 @@
   (is (= 21 (day-one :minute)))
   (is (= 48 (day-one :second)))
   ;; overflows simply roll over to the next month/year/etc.
-  (is (= 1 ((date 2008 1 32) :day)))
-  ;; TODO: why doesn't this work? (isa? (day-one :calendar) java.util.Calendar)
-  (is (= java.util.GregorianCalendar (class (day-one :calendar)))))
+  (is (= 1 ((date 2008 1 32) :day))))
 
 ;; (deftest test-parse-date
 ;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
@@ -44,7 +42,10 @@
   (is (= (date 2008 11 21 11 21 49)
          (later day-one 1 :second)))
   (is (= (later christmas :day)
-         (later christmas 1 :day))))
+         (later christmas 1 :day)))
+  (let [party (date 2007 12 31, 22 0 0)
+        later-party (date 2007 12 31, 23 0 0)]
+    (is (= later-party (later party :hour)))))
 
 (deftest test-earlier
   (is (= (date 2008 8 13 11 21 48)
@@ -54,9 +55,6 @@
   (is (= (date 2008 11 21 9 21 48)
          (earlier day-one 2 :hour))))
 
-;; Better would be to make > and < etc. work with dates; then >= would
-;; be free. But this involves a change to core, I think?
-
 (deftest test-earlier?
   (is (earlier? (date 2008 12 12)
                 (date 2009 12 12))))
@@ -65,21 +63,29 @@
   (is (later? (date 2008 12 99)
               (date 2009 1 1))))
 
-;; (deftest test-time-between
-;;   ;; Leaning towards seconds being the default unit.
-;;   (is (= 5 (time-between (date 2009 1 1, 10 10 10)
-;;                          (date 2009 1 1, 10 10 15))))
-;;   (is (= 10 (time-between (date 2009 1 1, 10 10 10)
-;;                           (date 2009 1 1, 10 20 10)
-;;                           :minutes)))
-;;   ;; This means it rounds... if you ask for days, you get integral
-;;   ;; days. Not sure that this is agreeable.
-;;   (is (= 7 (time-between christmas new-years :days))))
+(deftest test-time-between
+  ;; Milliseconds is the default unit
+  (is (= 5000 (time-between (date 2009 1 1, 10 10 10)
+                            (date 2009 1 1, 10 10 15))))
+  (is (= 10 (time-between (date 2009 1 1, 10 10 10)
+                          (date 2009 1 1, 10 20 10)
+                          :minutes)))
+  (is (= 6 (int (time-between christmas new-years :day)))))
 
-;; (deftest test-date-seq
-;;   ;; TODO: should return a lazy seq of all dates between the two dates
-;;   ;; given, with an interval provided.
-;;   )
+(deftest test-date-seq
+  (is (= (list christmas
+               (date 2007 12 26, 3 0 02)
+               (date 2007 12 27, 3 0 02)
+               (date 2007 12 28, 3 0 02)
+               (date 2007 12 29, 3 0 02)
+               (date 2007 12 30, 3 0 02)
+               (date 2007 12 31, 3 0 02))
+         (date-seq :day christmas new-years)))
+  (let [party (date 2007 12 31, 22 0 0)
+        party2 (date 2007 12 31, 23 0 0)
+        the-seq (date-seq :hour party new-years)]
+    (is (= (list party party2)
+           (take 2 the-seq)))))
 
 ;; (deftest test-beginning-of
 ;;   (is (= (date 2007 12 1) (beginning-of christmas :month)))
