@@ -6,7 +6,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use 'clojure.contrib.accumulators)
+(ns clojure.contrib.accumulators.examples
+  (:use [clojure.contrib.accumulators
+	 :only (combine add add-items
+		empty-vector empty-list empty-queue empty-set empty-map
+		empty-counter empty-counter-with-total
+		empty-sum empty-product empty-maximum empty-minimum
+		empty-min-max empty-string empty-tuple)]))
 
 ; Vector accumulator: combine is concat, add is conj
 (combine [:a :b] [:c :d] [:x :y])
@@ -63,9 +69,9 @@
       m2 (add-items empty-minimum [(/ 1 2)])]
   (combine m1 m2))
 
-; Range accumulator: combination of minimum and maximum
-(let [m1 (add-items empty-range [2 3])
-      m2 (add-items empty-range [(/ 1 2)])]
+; Min-max accumulator: combination of minimum and maximum
+(let [m1 (add-items empty-min-max [2 3])
+      m2 (add-items empty-min-max [(/ 1 2)])]
   (combine m1 m2))
 
 ; String accumulator: combine is concatenation
