@@ -93,6 +93,16 @@
 (defn- get-unit [calendar unit]
   (.get calendar (units-to-calendar-units unit)))
 
+(defmulti
+  #^{:doc "Take in a date and a format (either a keyword or
+a string) and return a string with the formatted date."}
+  format-date (fn [date form] form))
+
+(defmulti
+  #^{:doc "Take in a string with a formatted date and a format
+ (either a keyword or a string) and return a parsed date."}
+  parse-date (fn [source form] form))
+
 ;; (gen-interface
 ;;  :name clojure.contrib.chrono.Instant
 ;;  :extends [clojure.lang.IFn])
@@ -104,9 +114,7 @@
   (let [calendar (apply make-calendar args)]
     (proxy [clojure.lang.IFn] []
       (toString [] (str "#<ChronoDate "
-                        ;; TODO: use prettier formatting; ugh.
-                        (this :year) "-" (this :month) "-" (this :day) " "
-                        (this :hour) ":" (this :minute) ":" (this :second)
+                        (format-date this :iso8601)
                         ">"))
       ;; look up :year, :month, :date, :weekday, etc.
       (equals [other-date]
@@ -168,16 +176,6 @@
        (when (or (nil? to) (earlier? from to))
          (cons from (date-seq units (later from units) to)))))
   ([units from] (date-seq units from nil)))
-
-(defmulti
-  #^{:doc "Take in a date and a format (either a keyword or
-a string) and return a string with the formatted date."}
-  format-date (fn [date form] form))
-
-(defmulti
-  #^{:doc "Take in a string with a formatted date and a format
- (either a keyword or a string) and return a parsed date."}
-  parse-date (fn [source form] form))
 
 (defmacro def-date-format [fname [arg] & body]
   `(defmethod format-date ~(keyword (name fname)) [~arg ~'_]
