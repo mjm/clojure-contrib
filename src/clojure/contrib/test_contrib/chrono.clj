@@ -16,6 +16,10 @@
   ;; overflows simply roll over to the next month/year/etc.
   (is (= 1 ((date 2008 1 32) :day))))
 
+(deftest test-equality
+  (is (= (date 2009 3 2)
+         (date 2009 3 2))))
+
 ;; (deftest test-parse-date
 ;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
 ;;   (is (= day-one (parse-date "2008 Nov 21 11:21:48"))))
