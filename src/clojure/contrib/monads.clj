@@ -1,7 +1,7 @@
 ;; Monads in Clojure
 
 ;; by Konrad Hinsen
-;; last updated February 18, 2009
+;; last updated March 3, 2009
 
 ;; Copyright (c) Konrad Hinsen, 2009. All rights reserved.  The use
 ;; and distribution terms for this software are covered by the Eclipse
@@ -60,8 +60,7 @@
   [mexpr step]
   (let [[bform expr] step]
     (if (identical? bform :when)
-      (list 'm-bind `(if ~expr (~'m-result ::any) ~'m-zero)
-	    (list 'fn ['_] mexpr))
+      `(if ~expr ~mexpr ~'m-zero)
       (list 'm-bind expr (list 'fn [bform] mexpr)))))
 
 (defn- monad-expr
@@ -127,9 +126,8 @@
       `(defmonadfn ~doc-name ~args ~expr)))
 
   ([name args expr]
-   (let [fn-name (symbol (format "m+%s+m" (str name)))]
+   (let [fn-name (symbol (str *ns*) (format "m+%s+m" (str name)))]
    `(do
-      (def ~fn-name nil)
       (defmacro ~name ~args
         (list (quote ~fn-name)
 	      '~'m-bind '~'m-result '~'m-zero '~'m-plus
@@ -384,3 +382,31 @@
 			       (fn [xs]
 				 (apply concat (map f xs))))))
 	  ]))
+
+;; Contributed by Jim Duey
+(defn state-t
+  "Monad transformer that transforms a monad m into a monad of stateful
+  computations that have the base monad type as their result."
+  [m]
+  (monad [m-result (with-monad m
+		     (fn m-result-state-t [v]
+                       (fn [s]
+			 (m-result (list v s)))))
+	  m-bind   (with-monad m
+                     (fn m-bind-state-t [stm f]
+                       (fn [s]
+                         (m-bind (stm s)
+                                 (fn [[v ss]]
+                                   ((f v) ss))))))
+          m-zero   (with-monad m
+                     (if (= ::undefined m-zero)
+		       ::undefined
+		       (fn [s]
+			 m-zero)))
+          m-plus   (with-monad m
+                     (if (= ::undefined m-plus)
+		       ::undefined
+		       (fn [& stms]
+			 (fn [s]
+			   (apply m-plus (map #(% s) stms))))))
+          ]))

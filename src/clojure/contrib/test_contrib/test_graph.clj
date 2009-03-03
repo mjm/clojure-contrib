@@ -79,9 +79,9 @@
     (is (every? #(= #{:a :b :c :d :e} (set %))
                 (map (partial get-neighbors tc-1) (:nodes tc-1))))
     (is (= (get :a) #{:a :b :c :d :e}))
-    (is (= (get :h) #{:h}))
+    (is (= (get :h) #{}))
     (is (= (get :j) #{:i :j}))
-    (is (= (get :g) #{:a :b :c :d :e :f :g}))))
+    (is (= (get :g) #{:a :b :c :d :e :f}))))
 
 
 (deftest test-post-ordered-nodes
@@ -111,9 +111,17 @@
     (is (= ecg empty-graph))))
 
 
+(deftest test-recursive-component?
+  (let [sccs (scc test-graph-2)]
+    (is (= (set (filter (partial recursive-component? test-graph-2) sccs))
+           #{#{:i :j} #{:b :c :a :d :e} #{:f}}))))
+
+
 (deftest test-self-recursive-sets
   (is (= (set (self-recursive-sets test-graph-2))
-         #{#{:i :j} #{:b :c :a :d :e} #{:f}}))
+         (set (filter
+               (partial recursive-component? test-graph-2)
+               (scc test-graph-2)))))
   (is (empty? (self-recursive-sets empty-graph))))
 
 
