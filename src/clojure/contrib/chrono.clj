@@ -45,6 +45,15 @@
 ;; ;; (date 2009 2 27 12 34 56) (date 2010 2 27 12 34 56)
 ;; ;; (date 2011 2 27 12 34 56) (date 2012 2 27 12 34 56) [...]
 ;;
+;;; For converting between strings and dates, use format-date and
+;;; parse-date
+;;
+;; (format-date my-date :short-date-time) ;; 2/27/09 12:34 PM
+;; (format-date my-other-date :long-date) ;; February 27, 2009
+;; (parse-date "12/25/09" :short-date) ;; (date 2009 12 25)
+;; (parse-date "January 1, 2008 1:45:23 PM" :long-date-time)
+;; ;; (date 2008 1 1 13 45 23)
+;;
 ;; See test_contrib/chrono.clj for more details.
 ;;
 ;;; TODO:
