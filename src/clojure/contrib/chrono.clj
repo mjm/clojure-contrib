@@ -54,6 +54,22 @@
 ;; (parse-date "January 1, 2008 1:45:23 PM" :long-date-time)
 ;; ;; (date 2008 1 1 13 45 23)
 ;;
+;; Supported date formats are:
+;;   iso8601
+;;   short-date
+;;   medium-date
+;;   long-date
+;;   full-date
+;;   short-date-time
+;;   medium-date-time
+;;   long-date-time
+;;   full-date-time
+;;
+;; Both format-date and parse-date also support a string for the
+;; format argument, which will use the string as the format for a
+;; SimpleDateFormat (see the javadocs of that class for how to write
+;; these formats).
+;;
 ;; See test_contrib/chrono.clj for more details.
 ;;
 ;;; TODO:
