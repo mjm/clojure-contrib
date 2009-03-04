@@ -201,6 +201,8 @@ a string) and return a string with the formatted date."}
          (cons from (date-seq units (later from units) to)))))
   ([units from] (date-seq units from nil)))
 
+;;; Formatting and Parsing
+
 (defmacro def-date-format [fname [arg] & body]
   `(defmethod format-date ~(keyword (name fname)) [~arg ~'_]
      ~@body))

@@ -24,16 +24,6 @@
   ;; TODO: not sure how to handle this case:
   (is (not (= christmas 25))))
 
-;; (deftest test-parse-date
-;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
-;;   (is (= day-one (parse-date "2008 Nov 21 11:21:48"))))
-
-(deftest test-format-date
-  (is (= "11/21/08" (format-date day-one :short-date)))
-  ;; TODO: fill this out with other formats?
-  (is (= (format-date day-one :iso8601) (format-date day-one)))
-  (is (= "2008-11-21 11:21:48" (format-date day-one :iso8601))))
-
 (deftest test-to-string
   (is (= "2007-12-25 03:00:02" (.toString christmas))))
 
@@ -108,3 +98,23 @@
   (is (= (date 2007 12 31 23 59 59) (end-of christmas :month)))
   (is (= (date 2007 12 25, 23 59 59) (end-of christmas :day)))
   (is (= (date 2007 12 25, 3 59 59) (end-of christmas :hour))))
+
+(deftest test-java-date-formats
+  (is (= "11/21/08" (format-date day-one :short-date)))
+  (is (= "Dec 25, 2007" (format-date christmas :medium-date)))
+  (is (= "January 1, 2008" (format-date new-years :long-date)))
+  (is (= "Thursday, December 25, 2008" (format-date (later christmas 1 :year) :full-date)))
+  ;; Time zone might not be the same everywhere, so use .startsWith
+  (is (.startsWith (format-date christmas :medium-date-time) "Dec 25, 2007 3:00:02 AM")))
+
+(deftest test-java-date-parsers
+  (is (= (date 2008 11 21) (parse-date "11/21/08" :short-date)))
+  (is (= (date 2007 12 25) (parse-date "Dec 25, 2007" :medium-date)))
+  (is (= new-years (parse-date "January 1, 2008" :long-date)))
+  (is (= (date 2008 12 25) (parse-date "Thursday, December 25, 2008" :full-date)))
+  (is (= christmas (parse-date "Dec 25, 2007 3:00:02 AM" :medium-date-time))))
+
+(deftest test-iso-date-format
+  (is (= (date 2008 12 25) (parse-date "2008-12-25 00:00:00" :iso8601)))
+  (is (= "2008-11-21 11:21:48" (format-date day-one :iso8601))))
+
