@@ -47,23 +47,16 @@
 ;;
 ;; See test_contrib/chrono.clj for more details.
 ;;
+;;; TODO:
+;;
+;; * Timezones
+;; * More support for week-based units
+;; * Various others scattered through code
+;;
 
 (ns clojure.contrib.chrono
   (:import (java.util Calendar TimeZone)
            (java.text DateFormat SimpleDateFormat)))
-
-;; Use to resolve keywords
-(def this-ns (str *ns*))
-
-(def #^{:doc "Conversion of Calendar weekdays to keywords"}
-     weekday-map
-     {Calendar/SUNDAY :sunday
-      Calendar/MONDAY :monday
-      Calendar/TUESDAY :tuesday
-      Calendar/WEDNESDAY :wednesday
-      Calendar/THURSDAY :thursday
-      Calendar/FRIDAY :friday
-      Calendar/SATURDAY :saturday})
 
 (def #^{:doc "Conversion of unit keywords to Calendar units"}
      units-to-calendar-units
@@ -86,7 +79,7 @@
       :millisecond 1})
 
 (defn- make-calendar
-  "Given some date values, create a Java Calendar object with only that data."
+  "Given some date values, create a Java Calendar object."
   ([] (doto (Calendar/getInstance)
         (.clear)
         (.setLenient true)))
@@ -257,8 +250,6 @@ a string) and return a string with the formatted date."}
   (DateFormat/getDateTimeInstance
    DateFormat/FULL
    DateFormat/FULL))
-
-;; TODO: we should support ISO 8601 formats.
 
 ;;; Formats dates with a custom string format
 (defmethod format-date :default [date form]

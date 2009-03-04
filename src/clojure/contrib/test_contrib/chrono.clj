@@ -6,31 +6,36 @@
 (def new-years (date 2008 1 1))
 (def day-one (date 2008 11 21, 11 21 48))
 
-(deftest test-date-creation
+(deftest test-date-creation-lookup
   (is (= 2008 (day-one :year)))
   (is (= 11 (day-one :month)))
   (is (= 21 (day-one :day)))
   (is (= 11 (day-one :hour)))
   (is (= 21 (day-one :minute)))
   (is (= 48 (day-one :second)))
+  (is (= 48 (:second day-one)))
   ;; overflows simply roll over to the next month/year/etc.
   (is (= 1 ((date 2008 1 32) :day))))
 
 (deftest test-equality
   (is (= (date 2009 3 2)
-         (date 2009 3 2))))
+         (date 2009 3 2)))
+  (is (not (= 25 christmas)))
+  ;; TODO: not sure how to handle this case:
+  (is (not (= christmas 25))))
 
 ;; (deftest test-parse-date
 ;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
 ;;   (is (= day-one (parse-date "2008 Nov 21 11:21:48"))))
 
-;; (deftest test-format-date
-;;   (is (= "2008 Nov 21 11:21:48" (format-date day-one)))
-;;   (is (= "2008-11-21 11:12Z" (format-date day-one :iso))))
+(deftest test-format-date
+  (is (= "11/21/08" (format-date day-one :short-date)))
+  ;; TODO: fill this out with other formats?
+  (is (= (format-date day-one :iso8601) (format-date day-one)))
+  (is (= "2008-11-21 11:21:48" (format-date day-one :iso8601))))
 
-;; (deftest test-to-string
-;;   ;; TODO
-;;   )
+(deftest test-to-string
+  (is (= "2007-12-25 03:00:02" (.toString christmas))))
 
 (deftest test-later
   (is (= (date 2009 11 21 11 21 48)
