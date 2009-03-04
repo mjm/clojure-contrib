@@ -108,35 +108,31 @@
 (defmulti
   #^{:doc "Take in a date and a format (either a keyword or
 a string) and return a string with the formatted date."}
-  format-date (fn [date form] form))
+  format-date (fn [date & form] (first form)))
 
 (defmulti
   #^{:doc "Take in a string with a formatted date and a format
  (either a keyword or a string) and return a parsed date."}
-  parse-date (fn [source form] form))
-
-;; (gen-interface
-;;  :name clojure.contrib.chrono.Instant
-;;  :extends [clojure.lang.IFn])
+  parse-date (fn [source & form] (first form)))
 
 (defn date
   "Returns a new date object. Takes year, month, and day as args as
   well as optionally hours, minutes, and seconds."
   [& args]
   (let [calendar (apply make-calendar args)]
-    ;; TODO: if we implement Associative, then we can use
-    ;; (:day my-date) as well as (my-date :day)
-    (proxy [clojure.lang.IFn] []
-      (toString [] (str "#<ChronoDate "
-                        (format-date this :iso8601)
-                        ">"))
-      ;; look up :year, :month, :date, :weekday, etc.
+    (proxy [clojure.lang.IFn clojure.lang.Associative] []
+      (toString [] (format-date this :iso8601))
       (equals [other-date]
               (.equals calendar (other-date :calendar)))
+      ;; look up :year, :month, :date, etc.
       (invoke [unit]
               (cond (= :calendar unit) calendar ;; mostly for internal use
                     (= :month unit) (inc (get-unit calendar :month))
-                    true (get-unit calendar unit))))))
+                    true (get-unit calendar unit)))
+      ;; These (along with implementing Associative) allow us to use
+      ;; (:month my-date), etc. Good idea? Not sure.
+      (valAt [unit] (.invoke this unit))
+      (equiv [o] (.equals this o)))))
 
 ;;; Relative functions
 
@@ -256,11 +252,18 @@ a string) and return a string with the formatted date."}
    (doto (make-calendar)
      (.setTime (.parse (SimpleDateFormat. form) source)))))
 
+(defmethod format-date nil [date]
+  (format-date date :iso8601))
+
+;; TODO: shouldn't these be collapsed to a single function call?
+
 (def-date-format iso8601 [date]
   (format-date date "yyyy-MM-dd HH:mm:ss"))
 
 (def-date-parser iso8601 [source]
   (parse-date source "yyyy-MM-dd HH:mm:ss"))
+
+;; TODO: parse-date should be able to guess at the format
 
 ;; Redefine subs to allow for negative indices.
 ;; TODO: This should be submitted as a patch to Clojure.
