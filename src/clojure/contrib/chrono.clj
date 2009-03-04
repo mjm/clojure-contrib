@@ -150,6 +150,11 @@
       (valAt [unit] (.invoke this unit))
       (equiv [o] (.equals this o)))))
 
+(defn now
+  "Returns a new date object with the current date and time."
+  []
+  (date (Calendar/getInstance)))
+
 ;;; Relative functions
 
 (defn later
