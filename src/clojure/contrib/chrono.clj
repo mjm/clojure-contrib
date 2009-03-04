@@ -293,13 +293,14 @@ a string) and return a string with the formatted date."}
 (defmethod format-date nil [date]
   (format-date date :iso8601))
 
-;; TODO: shouldn't these be collapsed to a single function call?
+(defmacro def-simple-date-format [fname form]
+  `(do
+     (def-date-format ~fname [date#]
+       (format-date date# ~form))
+     (def-date-parser ~fname [source#]
+       (parse-date source# ~form))))
 
-(def-date-format iso8601 [date]
-  (format-date date "yyyy-MM-dd HH:mm:ss"))
-
-(def-date-parser iso8601 [source]
-  (parse-date source "yyyy-MM-dd HH:mm:ss"))
+(def-simple-date-format iso8601 "yyyy-MM-dd HH:mm:ss")
 
 ;; TODO: parse-date should be able to guess at the format
 
