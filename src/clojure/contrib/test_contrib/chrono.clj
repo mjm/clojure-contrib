@@ -20,14 +20,6 @@
   (is (= (date 2009 3 2)
          (date 2009 3 2))))
 
-;; (deftest test-parse-date
-;;   ;; TODO: What formats do we handle? Try to be as lenient as possible.
-;;   (is (= day-one (parse-date "2008 Nov 21 11:21:48"))))
-
-;; (deftest test-format-date
-;;   (is (= "2008 Nov 21 11:21:48" (format-date day-one)))
-;;   (is (= "2008-11-21 11:12Z" (format-date day-one :iso))))
-
 ;; (deftest test-to-string
 ;;   ;; TODO
 ;;   )
