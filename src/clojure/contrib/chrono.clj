@@ -14,9 +14,6 @@
 ;; (my-date :minute) ;; 34
 ;; (my-date :second) ;; 56
 ;;
-;; Currently (:day my-date) style is unsupported, but it doesn't look
-;; like it would be hard to add; see TODO under the defn of date.
-;;
 ;;; You may omit the time if you like:
 ;;
 ;; (def my-other-date (date 2009 2 27))
