@@ -120,15 +120,15 @@
 (defn- get-unit [calendar unit]
   (.get calendar (units-to-calendar-units unit)))
 
-(defmulti
-  #^{:doc "Take in a date and a format (either a keyword or
-a string) and return a string with the formatted date."}
-  format-date (fn [date & form] (first form)))
+(defmulti format-date
+  "Take in a date and a format (either a keyword or a string) and
+  return a string with the formatted date."
+  (fn [date & form] (first form)))
 
-(defmulti
-  #^{:doc "Take in a string with a formatted date and a format
- (either a keyword or a string) and return a parsed date."}
-  parse-date (fn [source & form] (first form)))
+(defmulti parse-date
+  "Take in a string with a formatted date and a format (either a
+  keyword or a string) and return a parsed date."
+  (fn [source & form] (first form)))
 
 (defn date
   "Returns a new date object. Takes year, month, and day as args as
