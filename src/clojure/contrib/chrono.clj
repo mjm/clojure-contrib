@@ -180,6 +180,25 @@ a string) and return a string with the formatted date."}
        (/ (time-between date-a date-b)
           (units-in-milliseconds units)))))
 
+(defn- args-for "Allow round-tripping through date function"
+  [date]
+  [(date :year) (date :month) (date :day)
+   (date :hour) (date :minute) (date :second)])
+
+(defn beginning-of
+  "Return a date at the beginning of the month, year, day, etc. from the-date."
+  [the-date unit]
+  ;; TODO: clean up!
+  (let [position ({:year 1 :month 2 :day 3 :hour 4 :minute 5 :second 6} unit)]
+    (apply date (concat (take position (args-for the-date))
+                        (drop position [1970 1 1 0 0 0])))))
+
+(defn end-of
+  "Return a date at the end of the month, year, day, etc. from the-date."
+  [the-date unit]
+  ;; TODO: this is kinda ugly too?
+  (earlier (later (beginning-of the-date unit) unit) :second))
+
 (defn date-seq
   "Returns a lazy seq of dates starting with from up until to in
   increments of units. If to is omitted, returns an infinite seq."

@@ -91,17 +91,15 @@
     (is (= (list party party2)
            (take 2 the-seq)))))
 
-;; (deftest test-beginning-of
-;;   (is (= (date 2007 12 1) (beginning-of christmas :month)))
-;;   (is (= (date 2007 12 25) (beginning-of christmas :day)))
-;;   (is (= new-years (beginning-of new-years :year)))
-;;   (is (= (date 2007 12 30) (beginning-of christmas :week))))
 
-;; (deftest test-end-of
-;;   (is (= (date 2008 1 5) (end-of new-years :week)))
-;;   (is (= (date 2007 12 31 (end-of christmas :month))))
-;;   (is (= (date 2007 12 25, 23 59 59) (end-of christmas :day)))
-;;   (is (= (date 2007 12 25, 3 59 59) (end-of christmas :hour))))
+(deftest test-beginning-of
+  (is (= (date 2007 12 1) (beginning-of christmas :month)))
+  (is (= (date 2007 12 25) (beginning-of christmas :day)))
+  ;; (is (= (date 2007 12 30) (beginning-of christmas :week)))
+  (is (= new-years (beginning-of new-years :year))))
 
-;; TODO: time zone stuff?
-
+(deftest test-end-of
+  ;; (is (= (date 2008 1 5) (end-of new-years :week)))
+  (is (= (date 2007 12 31 23 59 59) (end-of christmas :month)))
+  (is (= (date 2007 12 25, 23 59 59) (end-of christmas :day)))
+  (is (= (date 2007 12 25, 3 59 59) (end-of christmas :hour))))
