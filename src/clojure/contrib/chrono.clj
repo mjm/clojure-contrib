@@ -141,7 +141,8 @@ a string) and return a string with the formatted date."}
     (proxy [clojure.lang.IFn clojure.lang.Associative] []
       (toString [] (format-date this :iso8601))
       (equals [other-date]
-              (.equals calendar (other-date :calendar)))
+              (and (instance? (.getClass this) other-date)
+                   (.equals calendar (other-date :calendar))))
       ;; look up :year, :month, :date, etc.
       (invoke [unit]
               (cond (= :calendar unit) calendar ;; mostly for internal use
