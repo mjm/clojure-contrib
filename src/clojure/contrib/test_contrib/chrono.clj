@@ -119,3 +119,7 @@
   (is (= new-years (parse-date "January 1, 2008" :long-date)))
   (is (= (date 2008 12 25) (parse-date "Thursday, December 25, 2008" :full-date)))
   (is (= christmas (parse-date "Dec 25, 2007 3:00:02 AM" :medium-date-time))))
+
+(deftest test-iso-date-format
+  (is (= (date 2008 12 25) (parse-date "2008-12-25 00:00:00" :iso8601)))
+  (is (= "2008-11-21 11:21:48" (format-date day-one :iso8601))))
