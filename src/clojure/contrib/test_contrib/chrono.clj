@@ -64,7 +64,7 @@
 
 (deftest test-time-between
   ;; Milliseconds is the default unit
-  (is (= 5000 (time-between (date 2009 1 1, 10 10 10)
+  (is (= 5 (time-between (date 2009 1 1, 10 10 10)
                             (date 2009 1 1, 10 10 15))))
   (is (= 10 (time-between (date 2009 1 1, 10 10 10)
                           (date 2009 1 1, 10 20 10)

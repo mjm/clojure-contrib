@@ -92,16 +92,16 @@
       :minute Calendar/MINUTE,
       :second Calendar/SECOND})
 
-(def #^{:doc "Number of milliseconds in each unit"}
-     units-in-milliseconds
-     {:year 31557600000,
-      :month 2592000000,
-      :week 67929088,
-      :day 86400000,
-      :hour 3600000,
-      :minute 60000,
-      :second 1000,
-      :millisecond 1})
+(def #^{:doc "Number of seconds in each unit"}
+     units-in-seconds
+     {:year 31557600,
+      :month 2592000,
+      :week 604800,
+      :day 86400,
+      :hour 3600,
+      :minute 60,
+      :second 1,
+      :millisecond 0.001})
 
 (defn- make-calendar
   "Given some date values, create a Java Calendar object."
@@ -182,22 +182,20 @@ a string) and return a string with the formatted date."}
   (.before (date-a :calendar) (date-b :calendar)))
 
 (defn time-between
-  "How many units between date-a and date-b? Units defaults to milliseconds."
-  ;; TODO: should we default to milliseconds just because that's what
-  ;; the underlying implementation uses? Is it a leaky abstraction?
+  "How many units between date-a and date-b? Units defaults to seconds."
   ([date-a date-b]
-     (java.lang.Math/abs
+     (/ (java.lang.Math/abs
       (- (.getTimeInMillis (date-a :calendar))
-         (.getTimeInMillis (date-b :calendar)))))
+         (.getTimeInMillis (date-b :calendar)))) 1000))
   ([date-a date-b units]
      ;; TODO: should we move plural support up to
-     ;; units-in-milliseconds and units-to-calendar-units?
+     ;; units-in-seconds and units-to-calendar-units?
      (let [units (if (re-find #"s$" (name units)) ;; Allow plurals
                    ;; This relies on the patched subs defn below
                    (keyword (subs (name units) 0 -1))
                    units)]
        (/ (time-between date-a date-b)
-          (units-in-milliseconds units)))))
+          (units-in-seconds units)))))
 
 (defn- args-for "Allow round-tripping through date function"
   [date]
