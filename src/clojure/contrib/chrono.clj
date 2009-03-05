@@ -72,7 +72,7 @@
 ;;; TODO:
 ;;
 ;; * Timezones
-;; * More support for week-based units
+;; * More support for weeks
 ;; * Various others scattered through code
 ;;
 
@@ -89,16 +89,16 @@
       :minute Calendar/MINUTE,
       :second Calendar/SECOND})
 
-(def #^{:doc "Number of milliseconds in each unit"}
-     units-in-milliseconds
-     {:year 31557600000,
-      :month 2592000000,
-      :week 67929088,
-      :day 86400000,
-      :hour 3600000,
-      :minute 60000,
-      :second 1000,
-      :millisecond 1})
+(def #^{:doc "Number of seconds in each unit"}
+     units-in-seconds
+     {:year 31557600,
+      :month 2592000,
+      :week 604800,
+      :day 86400,
+      :hour 3600,
+      :minute 60,
+      :second 1,
+      :millisecond 0.001})
 
 (defn- make-calendar
   "Given some date values, create a Java Calendar object."
@@ -146,7 +146,8 @@
                     (= :month unit) (inc (get-unit calendar :month))
                     true (get-unit calendar unit)))
       ;; These (along with implementing Associative) allow us to use
-      ;; (:month my-date), etc. Good idea? Not sure.
+      ;; (:month my-date), etc. Good idea? Not sure since we don't
+      ;; implement all of Associative, just enough for keywords.
       (valAt [unit] (.invoke this unit))
       (equiv [o] (.equals this o)))))
 
@@ -158,7 +159,8 @@
 ;;; Relative functions
 
 (defn later
-  "Returns a date that is later than the-date by amount units."
+  "Returns a date that is later than the-date by amount units.
+  Amount is one if not specified."
   ([the-date amount units]
      (date (doto (.clone (the-date :calendar))
              (.set (units-to-calendar-units units)
@@ -169,7 +171,8 @@
      (later the-date 1 units)))
 
 (defn earlier
-  "Returns a date that is earlier than the-date by amount units."
+  "Returns a date that is earlier than the-date by amount units.
+  Amount is one if not specified."
   ([the-date amount units]
      (later the-date (- amount) units))
   ([the-date units]
@@ -184,22 +187,20 @@
   (.before (date-a :calendar) (date-b :calendar)))
 
 (defn time-between
-  "How many units between date-a and date-b? Units defaults to milliseconds."
-  ;; TODO: should we default to milliseconds just because that's what
-  ;; the underlying implementation uses? Is it a leaky abstraction?
+  "How many units between date-a and date-b? Units defaults to seconds."
   ([date-a date-b]
-     (java.lang.Math/abs
+     (/ (java.lang.Math/abs
       (- (.getTimeInMillis (date-a :calendar))
-         (.getTimeInMillis (date-b :calendar)))))
+         (.getTimeInMillis (date-b :calendar)))) 1000))
   ([date-a date-b units]
      ;; TODO: should we move plural support up to
-     ;; units-in-milliseconds and units-to-calendar-units?
+     ;; units-in-seconds and units-to-calendar-units?
      (let [units (if (re-find #"s$" (name units)) ;; Allow plurals
                    ;; This relies on the patched subs defn below
                    (keyword (subs (name units) 0 -1))
                    units)]
        (/ (time-between date-a date-b)
-          (units-in-milliseconds units)))))
+          (units-in-seconds units)))))
 
 (defn- args-for "Allow round-tripping through date function"
   [date]
