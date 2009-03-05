@@ -75,7 +75,7 @@
 ;;; TODO:
 ;;
 ;; * Timezones
-;; * More support for week-based units
+;; * More support for weeks
 ;; * Various others scattered through code
 ;;
 
@@ -149,14 +149,16 @@ a string) and return a string with the formatted date."}
                     (= :month unit) (inc (get-unit calendar :month))
                     true (get-unit calendar unit)))
       ;; These (along with implementing Associative) allow us to use
-      ;; (:month my-date), etc. Good idea? Not sure.
+      ;; (:month my-date), etc. Good idea? Not sure since we don't
+      ;; implement all of Associative, just enough for keywords.
       (valAt [unit] (.invoke this unit))
       (equiv [o] (.equals this o)))))
 
 ;;; Relative functions
 
 (defn later
-  "Returns a date that is later than the-date by amount units."
+  "Returns a date that is later than the-date by amount units.
+  Amount is one if not specified."
   ([the-date amount units]
      (date (doto (.clone (the-date :calendar))
              (.set (units-to-calendar-units units)
@@ -167,7 +169,8 @@ a string) and return a string with the formatted date."}
      (later the-date 1 units)))
 
 (defn earlier
-  "Returns a date that is earlier than the-date by amount units."
+  "Returns a date that is earlier than the-date by amount units.
+  Amount is one if not specified."
   ([the-date amount units]
      (later the-date (- amount) units))
   ([the-date units]

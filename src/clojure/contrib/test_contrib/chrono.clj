@@ -21,7 +21,6 @@
   (is (= (date 2009 3 2)
          (date 2009 3 2)))
   (is (not (= 25 christmas)))
-  ;; TODO: not sure how to handle this case:
   (is (not (= christmas 25))))
 
 (deftest test-to-string
@@ -63,7 +62,7 @@
               (date 2009 1 1))))
 
 (deftest test-time-between
-  ;; Milliseconds is the default unit
+  ;; Seconds is the default unit
   (is (= 5 (time-between (date 2009 1 1, 10 10 10)
                             (date 2009 1 1, 10 10 15))))
   (is (= 10 (time-between (date 2009 1 1, 10 10 10)
