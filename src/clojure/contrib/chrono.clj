@@ -14,9 +14,6 @@
 ;; (my-date :minute) ;; 34
 ;; (my-date :second) ;; 56
 ;;
-;; Currently (:day my-date) style is unsupported, but it doesn't look
-;; like it would be hard to add; see TODO under the defn of date.
-;;
 ;;; You may omit the time if you like:
 ;;
 ;; (def my-other-date (date 2009 2 27))
@@ -51,7 +48,7 @@
 ;; (format-date my-date :short-date-time) ;; 2/27/09 12:34 PM
 ;; (format-date my-other-date :long-date) ;; February 27, 2009
 ;; (parse-date "12/25/09" :short-date) ;; (date 2009 12 25)
-;; (parse-date "January 1, 2008 1:45:23 PM" :long-date-time)
+;; (parse-date "January 1, 2008 1:45:23 PM EST" :long-date-time)
 ;; ;; (date 2008 1 1 13 45 23)
 ;;
 ;; Supported date formats are:
@@ -123,15 +120,15 @@
 (defn- get-unit [calendar unit]
   (.get calendar (units-to-calendar-units unit)))
 
-(defmulti
-  #^{:doc "Take in a date and a format (either a keyword or
-a string) and return a string with the formatted date."}
-  format-date (fn [date & form] (first form)))
+(defmulti format-date
+  "Take in a date and a format (either a keyword or a string) and
+  return a string with the formatted date."
+  (fn [date & form] (first form)))
 
-(defmulti
-  #^{:doc "Take in a string with a formatted date and a format
- (either a keyword or a string) and return a parsed date."}
-  parse-date (fn [source & form] (first form)))
+(defmulti parse-date
+  "Take in a string with a formatted date and a format (either a
+  keyword or a string) and return a parsed date."
+  (fn [source & form] (first form)))
 
 (defn date
   "Returns a new date object. Takes year, month, and day as args as
@@ -153,6 +150,11 @@ a string) and return a string with the formatted date."}
       ;; implement all of Associative, just enough for keywords.
       (valAt [unit] (.invoke this unit))
       (equiv [o] (.equals this o)))))
+
+(defn now
+  "Returns a new date object with the current date and time."
+  []
+  (date (Calendar/getInstance)))
 
 ;;; Relative functions
 
@@ -238,47 +240,30 @@ a string) and return a string with the formatted date."}
   `(defmethod parse-date ~(keyword (name fname)) [~arg ~'_]
      ~@body))
 
-(defmacro def-java-date-format [fname formatter]
-  `(do
-     (def-date-format ~fname [date#]
-       (.format ~formatter
-                (.getTime (date# :calendar))))
-     (def-date-parser ~fname [source#]
-       (date
-        (doto (make-calendar)
-          (.setTime (.parse ~formatter source#)))))))
+;;; Use the normal Java date formats
 
-(def-java-date-format short-date
-  (DateFormat/getDateInstance DateFormat/SHORT))
+(def #^{:private true}
+     format-to-java-const
+     {:short DateFormat/SHORT,
+      :medium DateFormat/MEDIUM,
+      :long DateFormat/LONG,
+      :full DateFormat/FULL})
 
-(def-java-date-format medium-date
-  (DateFormat/getDateInstance DateFormat/MEDIUM))
-
-(def-java-date-format long-date
-  (DateFormat/getDateInstance DateFormat/LONG))
-
-(def-java-date-format full-date
-  (DateFormat/getDateInstance DateFormat/FULL))
-
-(def-java-date-format short-date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/SHORT
-   DateFormat/SHORT))
-
-(def-java-date-format medium-date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/MEDIUM
-   DateFormat/MEDIUM))
-
-(def-java-date-format long-date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/LONG
-   DateFormat/LONG))
-
-(def-java-date-format full-date-time
-  (DateFormat/getDateTimeInstance
-   DateFormat/FULL
-   DateFormat/FULL))
+(doseq [[key con] format-to-java-const]
+  (defmethod format-date (keyword (str (name key) "-date")) [date _]
+    (.format (DateFormat/getDateInstance con)
+             (.getTime (date :calendar))))
+  (defmethod parse-date (keyword (str (name key) "-date")) [source _]
+    (date (doto (make-calendar)
+            (.setTime (.parse (DateFormat/getDateInstance con)
+                              source)))))
+  (defmethod format-date (keyword (str (name key) "-date-time")) [date _]
+    (.format (DateFormat/getDateTimeInstance con con)
+             (.getTime (date :calendar))))
+  (defmethod parse-date (keyword (str (name key) "-date-time")) [source _]
+    (date (doto (make-calendar)
+            (.setTime (.parse (DateFormat/getDateTimeInstance con con)
+                              source))))))
 
 ;;; Formats dates with a custom string format
 (defmethod format-date :default [date form]
