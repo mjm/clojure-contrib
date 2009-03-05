@@ -286,6 +286,8 @@
      (def-date-parser ~fname [source#]
        (parse-date source# ~form))))
 
+;; Technically this should also have a single character time zone
+;; indicator, but I'm not sure how to do that yet.
 (def-simple-date-format iso8601 "yyyy-MM-dd HH:mm:ss")
 
 ;; TODO: parse-date should be able to guess at the format
