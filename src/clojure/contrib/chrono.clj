@@ -156,6 +156,13 @@
   []
   (date (Calendar/getInstance)))
 
+(defn today
+  "Returns a new date object with only the current date. The time
+  fields will be set to 0."
+  []
+  (let [d (now)]
+    (date (d :year) (d :month) (d :day))))
+
 ;;; Relative functions
 
 (defn later
